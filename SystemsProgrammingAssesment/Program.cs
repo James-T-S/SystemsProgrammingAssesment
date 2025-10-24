@@ -51,7 +51,7 @@ namespace SystemsProgrammingAssesment
                 Console.Clear();
 
                 //move player
-                Console.WriteLine(movement(lastInput));
+                movement(lastInput);
 
                 //Write Game Map
                 for (int i = 0; i < gameMap.Count(); i++)
@@ -148,55 +148,8 @@ namespace SystemsProgrammingAssesment
 
 
 
-        /*static int movement(char lastInput)
-        {
-            List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
-
-            Dictionary<char, (int x, int y)> movementKey = new Dictionary<char, (int X, int y)>()
-            {
-                {'w', (0,-1) },
-                {'a', (-1,0) },
-                {'s', (0,1) },
-                {'d', (1,0) }
-            };
-            Dictionary<char, int> otherKeys = new Dictionary<char, int>()
-            {
-                {'e', 0 }
-            };
-
-            foreach ((int x, int y) coords in lastPositions) gameMap[coords.y][coords.x] = '.';
-
-            //if player eats apple
-            if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '@')
-            {
-                playerLength++;
-
-                playerY += movementKey[lastInput].y;
-                playerX += movementKey[lastInput].x;
-
-                lastPositions.Insert(0, (playerX, playerY));
-
-                foreach ((int x, int y) coords in lastPositions) gameMap[coords.y][coords.x] = '\u2588';
-
-                return playerLength;
-            }
-            else if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '#') return playerLength;
-            else if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '\u2588') return playerLength;
-
-
-            playerY += movementKey[lastInput].y;
-            playerX += movementKey[lastInput].x;
-
-            lastPositions.Insert(0, (playerX, playerY));
-            lastPositions.Remove(lastPositions.Last());
-
-            foreach ((int x, int y) coords in lastPositions) gameMap[coords.y][coords.x] = '\u2588';
-
-            return playerLength;
-        }*/
-
         static List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
-        static (int x, int y) movement(char lastInput)
+        static void movement(char lastInput)
         {
 
             Dictionary<char, (int x, int y)> movementKey = new Dictionary<char, (int X, int y)>()
@@ -216,8 +169,8 @@ namespace SystemsProgrammingAssesment
             int newY = playerY + movementKey[lastInput].y;
 
 
-            if (gameMap[newY][newX] == '#') return lastPositions.Last();
-            if (gameMap[newY][newX] == '\u2588') return lastPositions.Last();
+            if (gameMap[newY][newX] == '#') return;
+            if (gameMap[newY][newX] == '\u2588') return;
 
             if (gameMap[newY][newX] == '@')
             {
@@ -228,12 +181,14 @@ namespace SystemsProgrammingAssesment
                 playerY = newY;
                 playerX = newX;
 
-                return lastPositions.Last();
+                spawnNewApple();
+
+                return;
             }
             else
             {
                 (int x, int y) tail = lastPositions[lastPositions.Count() - 1];
-                
+
                 lastPositions.RemoveAt(lastPositions.Count() - 1);
                 lastPositions.Insert(0, (newX, newY));
 
@@ -243,7 +198,27 @@ namespace SystemsProgrammingAssesment
                 playerY = newY;
                 playerX = newX;
 
-                return lastPositions.Last();
+                return;
+            }
+
+        }
+
+        static void spawnNewApple()
+        {
+            (int x, int y) appleCoords;
+            bool invalidPosition = true;
+            Random rng = new Random();
+
+            while (invalidPosition)
+            {
+                appleCoords.x = rng.Next(1, gameMap[0].Count() - 2);
+                appleCoords.y = rng.Next(1, gameMap.Count() - 2);
+
+                if (gameMap[appleCoords.y][appleCoords.x] == '.')
+                {
+                    gameMap[appleCoords.y][appleCoords.x] = '@';
+                    invalidPosition = false;
+                }
             }
         }
     }
