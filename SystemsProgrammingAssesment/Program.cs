@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace SystemsProgrammingAssesment
             new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
             new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
             new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.', '\u2588', '.','.','@','.','.','.','.','.','.','#'},
+            new char[] {'#','.','.','.','.','.','.','.','.', '\u2588', '.','.','@','.','.','@','.','@','.','#'},
             new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
             new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
             new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
@@ -147,12 +148,9 @@ namespace SystemsProgrammingAssesment
 
 
 
-        static int movement(char lastInput)
+        /*static int movement(char lastInput)
         {
-            char player = '\u2588';
-            
-            HashSet<(int x, int y)> lastPositions = new HashSet<(int x, int y)> { (playerX, playerY) };
-            List<(int x, int y)> lastPositionsList = lastPositions.ToList();
+            List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
 
             Dictionary<char, (int x, int y)> movementKey = new Dictionary<char, (int X, int y)>()
             {
@@ -166,20 +164,87 @@ namespace SystemsProgrammingAssesment
                 {'e', 0 }
             };
 
-            if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '@') playerLength++;
-            if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '#') return playerLength;
+            foreach ((int x, int y) coords in lastPositions) gameMap[coords.y][coords.x] = '.';
 
+            //if player eats apple
+            if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '@')
+            {
+                playerLength++;
 
-            foreach ((int x, int y) pos in lastPositions) gameMap[pos.y][pos.x] = '.';
+                playerY += movementKey[lastInput].y;
+                playerX += movementKey[lastInput].x;
+
+                lastPositions.Insert(0, (playerX, playerY));
+
+                foreach ((int x, int y) coords in lastPositions) gameMap[coords.y][coords.x] = '\u2588';
+
+                return playerLength;
+            }
+            else if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '#') return playerLength;
+            else if (gameMap[playerY + movementKey[lastInput].y][playerX + movementKey[lastInput].x] == '\u2588') return playerLength;
+
 
             playerY += movementKey[lastInput].y;
             playerX += movementKey[lastInput].x;
 
-            lastPositions.Add((playerX, playerY));
+            lastPositions.Insert(0, (playerX, playerY));
+            lastPositions.Remove(lastPositions.Last());
 
-            for (int i = 0; i < playerLength && i < lastPositions.Count(); i++) gameMap[lastPositionsList[i].y][lastPositionsList[i].x] = player;
+            foreach ((int x, int y) coords in lastPositions) gameMap[coords.y][coords.x] = '\u2588';
 
             return playerLength;
+        }*/
+
+        static List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
+        static (int x, int y) movement(char lastInput)
+        {
+
+            Dictionary<char, (int x, int y)> movementKey = new Dictionary<char, (int X, int y)>()
+            {
+                {'w', (0,-1) },
+                {'a', (-1,0) },
+                {'s', (0,1) },
+                {'d', (1,0) }
+            };
+            Dictionary<char, int> otherKeys = new Dictionary<char, int>()
+            {
+                {'e', 0 }
+            };
+
+
+            int newX = playerX + movementKey[lastInput].x;
+            int newY = playerY + movementKey[lastInput].y;
+
+
+            if (gameMap[newY][newX] == '#') return lastPositions.Last();
+            if (gameMap[newY][newX] == '\u2588') return lastPositions.Last();
+
+            if (gameMap[newY][newX] == '@')
+            {
+                lastPositions.Insert(0, (newX, newY));
+
+                gameMap[newY][newX] = '\u2588';
+
+                playerY = newY;
+                playerX = newX;
+
+                return lastPositions.Last();
+            }
+            else
+            {
+                (int x, int y) tail = lastPositions[lastPositions.Count() - 1];
+                
+                lastPositions.RemoveAt(lastPositions.Count() - 1);
+                lastPositions.Insert(0, (newX, newY));
+
+                gameMap[tail.y][tail.x] = '.';
+                gameMap[newY][newX] = '\u2588';
+
+                playerY = newY;
+                playerX = newX;
+
+                return lastPositions.Last();
+            }
         }
     }
 }
