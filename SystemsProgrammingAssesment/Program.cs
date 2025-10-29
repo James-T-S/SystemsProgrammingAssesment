@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Numerics;
@@ -30,39 +31,42 @@ namespace SystemsProgrammingAssesment
 
         static void Main(string[] args)
         {
-            //login();
-
-            //Console.WriteLine($"Welcome {currentUser.username}, your high score is {currentUser.highScore}");
-
-            char lastInput = 'd';
-
-            //get input in another thread so the while loop can still run
-            Task.Run(() =>
+            if (args[0].ToLower().Trim() == "login")
             {
-                while (true)
-                {
-                    lastInput = Console.ReadKey(true).KeyChar;
-                }
-            });
-
-            while (true)
-            {
-                //clear console
-                Console.Clear();
-
-                //move player
-                movement(lastInput);
-
-                //Write Game Map
-                for (int i = 0; i < gameMap.Count(); i++)
-                {
-                    foreach (char c in gameMap[i]) Console.Write(c);
-                    Console.Write('\n');
-                }
-
-                //wait half a second
-                Thread.Sleep(500);
+                
             }
+            login(args);
+
+            bool running = true;
+
+            while (running)
+            {
+                Console.WriteLine($"Welcome {currentUser.username}, your high score is {currentUser.highScore}");
+                Console.WriteLine("Enter: \"play\" to play snake");
+                Console.WriteLine("Enter: \"join\" to join Group");
+                Console.WriteLine("Enter: \"exit\" to exit");
+
+                string input = Console.ReadLine().Trim().ToLower();
+
+                if (input == "play")
+                {
+                    playGame();
+                }
+                else if (input == "join")
+                {
+                    Console.WriteLine("Feature not implemented yet.");
+                }
+                else if (input == "exit")
+                {
+                    running = false;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input.");
+                }
+            }
+
+            Environment.Exit(0);
         }
 
 
@@ -118,7 +122,28 @@ namespace SystemsProgrammingAssesment
 
 
 
-        static void login()
+        static void reciveArgs(string[] args)
+        {
+            if (args.Count() == 0)
+            {
+                Console.WriteLine("No arguments provided.");
+                writeColour("Argument 1: Login or SignUp\n", ConsoleColor.Red);
+                writeColour("Argument 2: Username\n", ConsoleColor.Red);
+                writeColour("Argument 3: Password\n", ConsoleColor.Red);
+            }
+            else if (args[0].Trim().ToLower() == "help")
+            {
+                Console.WriteLine("Argument 1: Username");
+                Console.WriteLine("Argument 2: Password");
+            }
+        }
+
+
+        static void signUp()
+        {
+
+        }
+        static void login(string[] args)
         {
             bool found = false;
 
@@ -148,6 +173,37 @@ namespace SystemsProgrammingAssesment
 
 
 
+        static void playGame()
+        {
+            char lastInput = 'd';
+
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    lastInput = Console.ReadKey(true).KeyChar;
+                }
+            });
+
+            while (true)
+            {
+                //clear console
+                Console.Clear();
+
+                //move player
+                movement(lastInput);
+
+                //Write Game Map
+                for (int i = 0; i < gameMap.Count(); i++)
+                {
+                    foreach (char c in gameMap[i]) Console.Write(c);
+                    Console.Write('\n');
+                }
+
+                //wait half a second
+                Thread.Sleep(250);
+            }
+        }
         static List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
         static void movement(char lastInput)
         {
@@ -163,10 +219,14 @@ namespace SystemsProgrammingAssesment
             {
                 {'e', 0 }
             };
+            int newX = 0;
+            int newY = 0;
 
 
-            int newX = playerX + movementKey[lastInput].x;
-            int newY = playerY + movementKey[lastInput].y;
+
+            newX = playerX + movementKey[lastInput].x;
+            newY = playerY + movementKey[lastInput].y;
+
 
 
             if (gameMap[newY][newX] == '#') return;
@@ -202,7 +262,6 @@ namespace SystemsProgrammingAssesment
             }
 
         }
-
         static void spawnNewApple()
         {
             (int x, int y) appleCoords;
@@ -220,6 +279,16 @@ namespace SystemsProgrammingAssesment
                     invalidPosition = false;
                 }
             }
+        }
+
+
+
+        static void writeColour(string text, ConsoleColor colour)
+        {
+            Console.ForegroundColor = colour;
+            Console.Write(text);
+            Console.ResetColor();
+            return;
         }
     }
 }
