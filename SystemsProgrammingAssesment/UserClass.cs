@@ -11,6 +11,7 @@ namespace SystemsProgrammingAssesment
         public string username { get; set; } = "";
         public string password { get; set; } = "";
         public int highScore { get; set; } = 0;
+        public bool isInGroup { get; set; } = false;
         public string groupName { get; set; } = "";
     }
 }

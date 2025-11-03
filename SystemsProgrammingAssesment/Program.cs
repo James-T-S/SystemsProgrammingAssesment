@@ -5,6 +5,7 @@ using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Timers;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SystemsProgrammingAssesment
 {
@@ -31,11 +32,7 @@ namespace SystemsProgrammingAssesment
 
         static void Main(string[] args)
         {
-            if (args[0].ToLower().Trim() == "login")
-            {
-                
-            }
-            login(args);
+            reciveArgs(args);
 
             bool running = true;
 
@@ -54,7 +51,7 @@ namespace SystemsProgrammingAssesment
                 }
                 else if (input == "join")
                 {
-                    Console.WriteLine("Feature not implemented yet.");
+                    // do sstuff
                 }
                 else if (input == "exit")
                 {
@@ -62,10 +59,12 @@ namespace SystemsProgrammingAssesment
                 }
                 else
                 {
-                    Console.WriteLine("Invalid input.");
+                    Console.Clear();
+                    Console.WriteLine("Invalid input.\n\n");
                 }
             }
 
+            writeUserFile(45);
             Environment.Exit(0);
         }
 
@@ -91,6 +90,8 @@ namespace SystemsProgrammingAssesment
                 user.username = lineSplit[0];
                 user.password = lineSplit[1];
                 user.highScore = Convert.ToInt32(lineSplit[2]);
+                //user.isInGroup = Convert.ToBoolean(lineSplit[3]);
+                //user.groupName = lineSplit[4];
 
                 usersList.Add(user);
             }
@@ -99,24 +100,37 @@ namespace SystemsProgrammingAssesment
         }
         static void writeUserFile(int newHighScore)
         {
+            bool found = false;
+            int userIndex = 0;
             List<UserClass> usersList = readUsersFile();
 
             for (int i = 0; i < usersList.Count(); i++)
             {
                 if (usersList[i].username == currentUser.username && usersList[i].password == currentUser.password)
                 {
-                    usersList[i].highScore = newHighScore;
-
-                    List<string> newLines = new List<string>();
-
-                    foreach (UserClass user in usersList)
-                    {
-                        string line = $"{user.username} {user.password} {user.highScore}";
-                        newLines.Add(line);
-                    }
-
-                    File.WriteAllLines("users.txt", newLines);
+                    found = true;
+                    userIndex = i;
                 }
+            }
+
+            if (found)
+            {
+                usersList[userIndex].highScore = newHighScore;
+
+                List<string> newLines = new List<string>();
+
+                foreach (UserClass user in usersList)
+                {
+                    string line = $"{user.username} {user.password} {user.highScore}";
+                    newLines.Add(line);
+                }
+
+                File.WriteAllLines("users.txt", newLines);
+            }
+            else
+            {
+                File.AppendAllText("users.txt", $"{currentUser.username} {currentUser.password}" +
+                    $" {newHighScore} {currentUser.isInGroup} {currentUser.groupName}\n");
             }
         }
 
@@ -124,49 +138,79 @@ namespace SystemsProgrammingAssesment
 
         static void reciveArgs(string[] args)
         {
-            if (args.Count() == 0)
+            //string formattedInput = args[0].ToLower().Trim().Replace(" ", "");
+
+            if (args[0].ToLower().Trim() == "login")
+            {
+                login(args);
+            }
+            else if (args[0].ToLower().Trim() == "signup")
+            {
+                signUp(args);
+            }
+            else if (args.Count() == 0)
             {
                 Console.WriteLine("No arguments provided.");
                 writeColour("Argument 1: Login or SignUp\n", ConsoleColor.Red);
                 writeColour("Argument 2: Username\n", ConsoleColor.Red);
                 writeColour("Argument 3: Password\n", ConsoleColor.Red);
+                Environment.Exit(0);
             }
             else if (args[0].Trim().ToLower() == "help")
             {
-                Console.WriteLine("Argument 1: Username");
-                Console.WriteLine("Argument 2: Password");
+                Console.WriteLine("Argument 1: Login or SignUp\n");
+                Console.WriteLine("Argument 2: Username\n");
+                Console.WriteLine("Argument 3: Password\n");
+                Environment.Exit(0);
             }
         }
 
 
-        static void signUp()
+        static void signUp(string[] args)
         {
+            bool alreadyExists = false;
 
+            string username = args[1];
+            string password = args[2];
+
+            List<UserClass> users = readUsersFile();
+
+            for (int i = 0; i < users.Count(); i++)
+            {
+                if (users[i].username == username && users[i].password == password)
+                {
+                    currentUser = users[i];
+                    alreadyExists = true;
+                    break;
+                }
+            }
+
+            if (!alreadyExists)
+            {
+                currentUser.username = username;
+                currentUser.password = password;
+                currentUser.highScore = 0;
+                currentUser.isInGroup = false;
+            }
         }
         static void login(string[] args)
         {
             bool found = false;
 
-            for (int tries = 0; tries < 3 && !found; tries++)
+            Console.Clear();
+
+            string username = args[1];
+            string password = args[2];
+
+            List<UserClass> users = readUsersFile();
+
+            for (int i = 0; i < users.Count(); i++)
             {
-                Console.Clear();
-
-                Console.WriteLine("LOGIN");
-                Console.Write("Username: ");
-                string username = Console.ReadLine();
-                Console.Write("Password: ");
-                string password = Console.ReadLine();
-
-                List<UserClass> users = readUsersFile();
-
-                for (int i = 0; i < users.Count(); i++)
+                if (users[i].username == username && users[i].password == password)
                 {
-                    if (users[i].username == username && users[i].password == password)
-                    {
-                        currentUser = users[i];
-                        found = true;
-                        break;
-                    }
+                    currentUser = users[i];
+                    found = true;
+                    break;
                 }
             }
         }
@@ -176,22 +220,23 @@ namespace SystemsProgrammingAssesment
         static void playGame()
         {
             char lastInput = 'd';
+            bool dead = false;
 
             Task.Run(() =>
             {
-                while (true)
+                while (!dead)
                 {
                     lastInput = Console.ReadKey(true).KeyChar;
                 }
             });
 
-            while (true)
+            while (!dead)
             {
                 //clear console
                 Console.Clear();
 
                 //move player
-                movement(lastInput);
+                dead = movement(lastInput);
 
                 //Write Game Map
                 for (int i = 0; i < gameMap.Count(); i++)
@@ -203,9 +248,13 @@ namespace SystemsProgrammingAssesment
                 //wait half a second
                 Thread.Sleep(250);
             }
+
+            Console.Clear();
+            return;
         }
+
         static List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
-        static void movement(char lastInput)
+        static bool movement(char lastInput)
         {
 
             Dictionary<char, (int x, int y)> movementKey = new Dictionary<char, (int X, int y)>()
@@ -229,8 +278,8 @@ namespace SystemsProgrammingAssesment
 
 
 
-            if (gameMap[newY][newX] == '#') return;
-            if (gameMap[newY][newX] == '\u2588') return;
+            if (gameMap[newY][newX] == '#') return true;
+            if (gameMap[newY][newX] == '\u2588') return true;
 
             if (gameMap[newY][newX] == '@')
             {
@@ -243,7 +292,7 @@ namespace SystemsProgrammingAssesment
 
                 spawnNewApple();
 
-                return;
+                return false;
             }
             else
             {
@@ -258,7 +307,7 @@ namespace SystemsProgrammingAssesment
                 playerY = newY;
                 playerX = newX;
 
-                return;
+                return false;
             }
 
         }
@@ -282,7 +331,11 @@ namespace SystemsProgrammingAssesment
         }
 
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text">Text that will change colour</param>
+        /// <param name="colour">the ConsoleColor to change it to</param>
         static void writeColour(string text, ConsoleColor colour)
         {
             Console.ForegroundColor = colour;
