@@ -11,34 +11,17 @@ namespace SystemsProgrammingAssesment
 {
     internal class Program
     {
-        static UserClass currentUser = new UserClass();
-        static List<char[]> gameMap = new List<char[]>
-        {
-            new char[] {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.', '\u2588', '.','.','@','.','.','@','.','@','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','#'},
-            new char[] {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'}
-        };
-
-        static int playerX = 9;
-        static int playerY = 4;
-        static int playerLength = 0;
-
+        static User? currentUser;
 
         static void Main(string[] args)
         {
-            reciveArgs(args);
+            ReciveArgs(args);
 
             bool running = true;
 
             while (running)
             {
-                Console.WriteLine($"Welcome {currentUser.username}, your high score is {currentUser.highScore}");
+                Console.WriteLine($"Welcome {currentUser.Username}, your high score is {currentUser.HighScore}");
                 Console.WriteLine("Enter: \"play\" to play snake");
                 Console.WriteLine("Enter: \"join\" to join Group");
                 Console.WriteLine("Enter: \"exit\" to exit");
@@ -47,11 +30,11 @@ namespace SystemsProgrammingAssesment
 
                 if (input == "play")
                 {
-                    playGame();
+                    currentUser.playGame();
                 }
                 else if (input == "join")
                 {
-                    // do sstuff
+                    Console.WriteLine("Enter a group name to join:");
                 }
                 else if (input == "exit")
                 {
@@ -63,50 +46,100 @@ namespace SystemsProgrammingAssesment
                     Console.WriteLine("Invalid input.\n\n");
                 }
             }
-
-            writeUserFile(45);
             Environment.Exit(0);
         }
 
 
-
-        static List<UserClass> readUsersFile()
+        //////////////////////////////////////////////
+        ///////////Read and Write txt File///////////
+        //////////////////////////////////////////////
+        static List<Clan> ReadClanFiles()
         {
-            if (!File.Exists("users.txt"))
+            string[] FileLines = Array.Empty<string>();
+            List<string> Users = new List<string>();
+            List<Clan> ClansList = new List<Clan>();
+
+            try
+            {
+                FileLines = File.ReadAllLines("users.txt");
+            }
+            catch (FileNotFoundException exception)
             {
                 File.Create("users.txt").Close();
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error {ex.Message}");
+            }
 
-            List<UserClass> usersList = new List<UserClass>();
+            Parallel.ForEach(FileLines, line =>
+            {
+                if (line.Trim() == "  ")
+                {
 
-            string[] userFileLines = File.ReadAllLines("users.txt");
+                }
+                line.Trim();
+                string[] lineSplit = line.Split(' ');
 
-            foreach (string line in userFileLines)
+                Clan clan = new Clan(Convert.ToInt32(lineSplit[0]), lineSplit[1],
+                    lineSplit[2], Convert.ToInt32(lineSplit[3]));
+
+                ClansList.Add(clan);
+            });
+            return ClansList;
+        }
+        static List<User> ReadUsersFile()
+        {
+            string[] FileLines = Array.Empty<string>();
+            List<User> usersList = new List<User>();
+
+            try
+            {
+                FileLines = File.ReadAllLines("users.txt");
+            }
+            catch (FileNotFoundException exception)
+            {
+                File.Create("users.txt").Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error {ex.Message}");
+            }
+
+            Parallel.ForEach(FileLines, line =>
             {
                 line.Trim();
                 string[] lineSplit = line.Split(' ');
 
-                UserClass user = new UserClass();
-                user.username = lineSplit[0];
-                user.password = lineSplit[1];
-                user.highScore = Convert.ToInt32(lineSplit[2]);
-                //user.isInGroup = Convert.ToBoolean(lineSplit[3]);
-                //user.groupName = lineSplit[4];
+                switch (lineSplit[0])
+                {
+                    case "bronze":
+                        currentUser = new BronzeUser(Convert.ToInt32(lineSplit[0]), lineSplit[1], lineSplit[2], Convert.ToInt32(lineSplit[3]));
+                        usersList.Add(currentUser);
+                        break;
 
-                usersList.Add(user);
-            }
+                    case "silver":
+                        currentUser = new SilverUser(Convert.ToInt32(lineSplit[0]), lineSplit[1], lineSplit[2], Convert.ToInt32(lineSplit[3]));
+                        usersList.Add(currentUser);
+                        break;
 
+                    case "gold":
+                        currentUser = new GoldUser(Convert.ToInt32(lineSplit[0]), lineSplit[1], lineSplit[2], Convert.ToInt32(lineSplit[3]));
+                        usersList.Add(currentUser);
+                        break;
+                }
+            });
             return usersList;
         }
-        static void writeUserFile(int newHighScore)
+        static void WriteUserFile(int newHighScore)
         {
             bool found = false;
             int userIndex = 0;
-            List<UserClass> usersList = readUsersFile();
+            List<User> usersList = ReadUsersFile();
 
             for (int i = 0; i < usersList.Count(); i++)
             {
-                if (usersList[i].username == currentUser.username && usersList[i].password == currentUser.password)
+                if (usersList[i].Username == currentUser.Username && usersList[i].Password == currentUser.Password)
                 {
                     found = true;
                     userIndex = i;
@@ -115,13 +148,13 @@ namespace SystemsProgrammingAssesment
 
             if (found)
             {
-                usersList[userIndex].highScore = newHighScore;
+                usersList[userIndex].HighScore = newHighScore;
 
                 List<string> newLines = new List<string>();
 
-                foreach (UserClass user in usersList)
+                foreach (User user in usersList)
                 {
-                    string line = $"{user.username} {user.password} {user.highScore}";
+                    string line = $"{user.Username} {user.Password} {user.HighScore}";
                     newLines.Add(line);
                 }
 
@@ -129,24 +162,27 @@ namespace SystemsProgrammingAssesment
             }
             else
             {
-                File.AppendAllText("users.txt", $"{currentUser.username} {currentUser.password}" +
-                    $" {newHighScore} {currentUser.isInGroup} {currentUser.groupName}\n");
+                File.AppendAllText("users.txt", $"{currentUser.Username} {currentUser.Password}" +
+                    $" {newHighScore}\n");
             }
         }
 
 
 
-        static void reciveArgs(string[] args)
+        //////////////////////////////////////////////
+        ///////////Sign in Login In System////////////
+        //////////////////////////////////////////////
+        static void ReciveArgs(string[] args)
         {
             //string formattedInput = args[0].ToLower().Trim().Replace(" ", "");
 
             if (args[0].ToLower().Trim() == "login")
             {
-                login(args);
+                Login(args);
             }
             else if (args[0].ToLower().Trim() == "signup")
             {
-                signUp(args);
+                SignUp(args);
             }
             else if (args.Count() == 0)
             {
@@ -164,20 +200,18 @@ namespace SystemsProgrammingAssesment
                 Environment.Exit(0);
             }
         }
-
-
-        static void signUp(string[] args)
+        static void SignUp(string[] args)
         {
             bool alreadyExists = false;
 
             string username = args[1];
             string password = args[2];
 
-            List<UserClass> users = readUsersFile();
+            List<User> users = ReadUsersFile();
 
             for (int i = 0; i < users.Count(); i++)
             {
-                if (users[i].username == username && users[i].password == password)
+                if (users[i].Username == username && users[i].Password == password)
                 {
                     currentUser = users[i];
                     alreadyExists = true;
@@ -187,29 +221,26 @@ namespace SystemsProgrammingAssesment
 
             if (!alreadyExists)
             {
-                currentUser.username = username;
-                currentUser.password = password;
-                currentUser.highScore = 0;
-                currentUser.isInGroup = false;
+                currentUser.Username = username;
+                currentUser.Password = password;
+                currentUser.HighScore = 0;
+                currentUser.SetRank("gold");
             }
         }
-        static void login(string[] args)
+        static void Login(string[] args)
         {
-            bool found = false;
-
             Console.Clear();
 
             string username = args[1];
             string password = args[2];
 
-            List<UserClass> users = readUsersFile();
+            List<User> users = ReadUsersFile();
 
             for (int i = 0; i < users.Count(); i++)
             {
-                if (users[i].username == username && users[i].password == password)
+                if (users[i].Username == username && users[i].Password == password)
                 {
                     currentUser = users[i];
-                    found = true;
                     break;
                 }
             }
@@ -217,122 +248,12 @@ namespace SystemsProgrammingAssesment
 
 
 
-        static void playGame()
-        {
-            char lastInput = 'd';
-            bool dead = false;
-
-            Task.Run(() =>
-            {
-                while (!dead)
-                {
-                    lastInput = Console.ReadKey(true).KeyChar;
-                }
-            });
-
-            while (!dead)
-            {
-                //clear console
-                Console.Clear();
-
-                //move player
-                dead = movement(lastInput);
-
-                //Write Game Map
-                for (int i = 0; i < gameMap.Count(); i++)
-                {
-                    foreach (char c in gameMap[i]) Console.Write(c);
-                    Console.Write('\n');
-                }
-
-                //wait half a second
-                Thread.Sleep(250);
-            }
-
-            Console.Clear();
-            return;
-        }
-
-        static List<(int x, int y)> lastPositions = new List<(int x, int y)> { (playerX, playerY) };
-        static bool movement(char lastInput)
-        {
-
-            Dictionary<char, (int x, int y)> movementKey = new Dictionary<char, (int X, int y)>()
-            {
-                {'w', (0,-1) },
-                {'a', (-1,0) },
-                {'s', (0,1) },
-                {'d', (1,0) }
-            };
-            Dictionary<char, int> otherKeys = new Dictionary<char, int>()
-            {
-                {'e', 0 }
-            };
-            int newX = 0;
-            int newY = 0;
 
 
-
-            newX = playerX + movementKey[lastInput].x;
-            newY = playerY + movementKey[lastInput].y;
-
-
-
-            if (gameMap[newY][newX] == '#') return true;
-            if (gameMap[newY][newX] == '\u2588') return true;
-
-            if (gameMap[newY][newX] == '@')
-            {
-                lastPositions.Insert(0, (newX, newY));
-
-                gameMap[newY][newX] = '\u2588';
-
-                playerY = newY;
-                playerX = newX;
-
-                spawnNewApple();
-
-                return false;
-            }
-            else
-            {
-                (int x, int y) tail = lastPositions[lastPositions.Count() - 1];
-
-                lastPositions.RemoveAt(lastPositions.Count() - 1);
-                lastPositions.Insert(0, (newX, newY));
-
-                gameMap[tail.y][tail.x] = '.';
-                gameMap[newY][newX] = '\u2588';
-
-                playerY = newY;
-                playerX = newX;
-
-                return false;
-            }
-
-        }
-        static void spawnNewApple()
-        {
-            (int x, int y) appleCoords;
-            bool invalidPosition = true;
-            Random rng = new Random();
-
-            while (invalidPosition)
-            {
-                appleCoords.x = rng.Next(1, gameMap[0].Count() - 2);
-                appleCoords.y = rng.Next(1, gameMap.Count() - 2);
-
-                if (gameMap[appleCoords.y][appleCoords.x] == '.')
-                {
-                    gameMap[appleCoords.y][appleCoords.x] = '@';
-                    invalidPosition = false;
-                }
-            }
-        }
 
 
         /// <summary>
-        /// 
+        /// Function to write coloured text to the console
         /// </summary>
         /// <param name="text">Text that will change colour</param>
         /// <param name="colour">the ConsoleColor to change it to</param>
