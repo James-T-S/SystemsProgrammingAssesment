@@ -26,7 +26,7 @@ namespace SystemsProgrammingAssesment
                 Console.WriteLine("Enter: \"join\" to join Group");
                 Console.WriteLine("Enter: \"exit\" to exit");
 
-                string input = Console.ReadLine().Trim().ToLower();
+                string? input = Console.ReadLine().Trim().ToLower();
 
                 if (input == "play")
                 {
@@ -52,8 +52,8 @@ namespace SystemsProgrammingAssesment
 
         //////////////////////////////////////////////
         ///////////Read and Write txt File///////////
-        //////////////////////////////////////////////
-        static List<Clan> ReadClanFiles()
+        /////////////////////////////////////////////
+        /*static List<Clan> ReadClanFiles()
         {
             string[] FileLines = Array.Empty<string>();
             List<string> Users = new List<string>();
@@ -87,7 +87,7 @@ namespace SystemsProgrammingAssesment
                 ClansList.Add(clan);
             });
             return ClansList;
-        }
+        }*/
         static List<User> ReadUsersFile()
         {
             string[] FileLines = Array.Empty<string>();
@@ -133,39 +133,61 @@ namespace SystemsProgrammingAssesment
         }
         static void WriteUserFile(int newHighScore)
         {
-            bool found = false;
-            int userIndex = 0;
-            List<User> usersList = ReadUsersFile();
+            List<User>? userList = ReadUsersFile();
 
-            for (int i = 0; i < usersList.Count(); i++)
+            for (int i = 0; i < userList.Count(); i++)
             {
-                if (usersList[i].Username == currentUser.Username && usersList[i].Password == currentUser.Password)
+                if (currentUser.ID == userList[i].ID)
                 {
-                    found = true;
-                    userIndex = i;
+                    userList[i].HighScore = currentUser.HighScore;
+
                 }
             }
 
-            if (found)
+            using (BinaryWriter writer = new BinaryWriter(File.Open("user.bin", FileMode.Create)))
             {
-                usersList[userIndex].HighScore = newHighScore;
-
-                List<string> newLines = new List<string>();
-
-                foreach (User user in usersList)
+                foreach (User user in userList)
                 {
-                    string line = $"{user.Username} {user.Password} {user.HighScore}";
-                    newLines.Add(line);
+                    writer.Write(user.ID);
+                    writer.Write(user.Username);
+                    writer.Write(user.Password);
+                    writer.Write(user.HighScore);
+                    writer.Write(user.GetRank());
                 }
-
-                File.WriteAllLines("users.txt", newLines);
-            }
-            else
-            {
-                File.AppendAllText("users.txt", $"{currentUser.Username} {currentUser.Password}" +
-                    $" {newHighScore}\n");
+                writer.Close();
+                return;
             }
         }
+        /*static void WriteClanFile(int newHighScore)
+        {
+            List<Clan> clanList = ReadClanFiles();
+
+            for (int i = 0; i < clanList.Count(); i++)
+            {
+                if (currentUser.ID == clanList[i].ID)
+                {
+                    foreach(Clan clan in clanList[i].Members)
+                    {
+
+                    }
+
+                }
+            }
+
+            using (BinaryWriter writer = new BinaryWriter(File.Open("clan.bin", FileMode.Create)))
+            {
+                foreach (User user in clanList)
+                {
+                    writer.Write(user.ID);
+                    writer.Write(user.Username);
+                    writer.Write(user.Password);
+                    writer.Write(user.HighScore);
+                    writer.Write(user.GetRank());
+                }
+                writer.Close();
+                return;
+            }
+        }*/
 
 
 
